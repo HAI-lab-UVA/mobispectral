@@ -29,22 +29,23 @@ def main():
     method = opt.method
     model = model_generator(method, pretrained_model_path).cuda()
     test_path = os.path.join(opt.data_root)
-    #print(test_path)
+    print(test_path)
     test(model, test_path, opt.outf)
 
 def test(model, test_path, save_path):
-    img_path_name = glob.glob(os.path.join(test_path, '*_RGB_D.png'))
+    img_path_name = glob.glob(os.path.join(test_path, '*_RGB_D.jpg'))
     img_path_name.sort()
     var_name = 'cube'
+    print(img_path_name)
     for i in range(len(img_path_name)):
         rgb = imageio.imread(img_path_name[i])
-        nir_path = img_path_name[i].replace('_RGB_D.png','_NIR.jpg')
+        nir_path = img_path_name[i].replace('_RGB_D.jpg','_NIR.jpg')
         nir = imageio.imread(nir_path)
         rgb = np.float32(rgb)
         nir = np.float32(nir)
         rgb = (rgb - rgb.min()) / (rgb.max() - rgb.min())
         nir = (nir - nir.min()) / (nir.max() - nir.min())
-        nir = nir[:,:,0]
+        #nir = nir[:,:,0]
         rgb = np.dstack((rgb, nir))
         rgb = np.expand_dims(np.transpose(rgb, [2, 0, 1]), axis=0).copy()
         rgb = torch.from_numpy(rgb).float().cuda()
