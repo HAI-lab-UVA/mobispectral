@@ -24,8 +24,8 @@ parser.add_argument("--data_root", type=str, default='../dataset/')
 parser.add_argument("--data_root1", type=str, default='../dataset/')
 parser.add_argument("--data_root2", type=str, default='../dataset/')
 parser.add_argument("--data_root3", type=str, default='../dataset/')
-parser.add_argument("--patch_size", type=int, default=64, help="patch size")
-parser.add_argument("--stride", type=int, default=64, help="stride")
+parser.add_argument("--patch_size", type=int, default=16, help="patch size")
+parser.add_argument("--stride", type=int, default=16, help="stride")
 parser.add_argument("--gpu_id", type=str, default='0', help='path log files')
 opt = parser.parse_args()
 os.environ["CUDA_DEVICE_ORDER"] = 'PCI_BUS_ID'
@@ -33,17 +33,21 @@ os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu_id
 
 # load dataset
 print("\nloading dataset ...")
-train_data1 = TrainDataset(data_root=opt.data_root1, crop_size=opt.patch_size, bgr2rgb=True, arg=True, stride=opt.stride)
-train_data2 = TrainDataset(data_root=opt.data_root2, crop_size=opt.patch_size, bgr2rgb=True, arg=True, stride=opt.stride)
-train_data3 = TrainDataset(data_root=opt.data_root3, crop_size=opt.patch_size, bgr2rgb=True, arg=True, stride=opt.stride)
-train_data = ConcatDataset([train_data1,train_data2,train_data3])
-#train_data = TrainDataset(data_root=opt.data_root, crop_size=opt.patch_size, bgr2rgb=True, arg=True, stride=opt.stride)
+dirs = []
+for (root, dirnames, filenames) in os.walk(opt.data_root):
+    dirs.extend(dirnames)
+    break
+
+train_datasets = []
+val_datasets = []
+
+for d in dirs:
+    train_datasets.append(TrainDataset(data_root=f"{opt.data_root}/{d}/reconstruction", crop_size=opt.patch_size, bgr2rgb=True, arg=True, stride=opt.stride))
+    val_datasets.append(ValidDataset(data_root=f"{opt.data_root}/{d}/reconstruction", bgr2rgb=True))
+train_data = ConcatDataset(train_datasets)
+val_data = ConcatDataset(val_datasets)
+
 print("Iteration per epoch:", len(train_data))
-val_data1 = ValidDataset(data_root=opt.data_root1, bgr2rgb=True)
-val_data2 = ValidDataset(data_root=opt.data_root2, bgr2rgb=True)
-val_data3 = ValidDataset(data_root=opt.data_root3, bgr2rgb=True)
-val_data = ConcatDataset([val_data1,val_data2,val_data3])
-#val_data = ValidDataset(data_root=opt.data_root, bgr2rgb=True)
 print("Validation set samples: ", len(val_data))
 
 # iterations
@@ -107,6 +111,7 @@ def main():
         train_loader = DataLoader(dataset=train_data, batch_size=opt.batch_size, shuffle=True, num_workers=2,
                                   pin_memory=True, drop_last=True)
         val_loader = DataLoader(dataset=val_data, batch_size=1, shuffle=False, num_workers=2, pin_memory=True)
+        print("BEFORE LOOP")
         for i, (images, labels) in enumerate(train_loader):
             labels = torch.add(labels,0.0001)
             labels = labels.cuda()

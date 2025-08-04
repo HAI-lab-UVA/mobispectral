@@ -12,7 +12,7 @@ class TrainDataset(Dataset):
         self.hypers = []
         self.bgrs = []
         self.arg = arg
-        h,w = 512,512  # img shape
+        h,w = 100,100  # img shape
         self.stride = stride
         self.patch_per_line = (w-crop_size)//stride+1
         self.patch_per_colum = (h-crop_size)//stride+1
@@ -23,7 +23,7 @@ class TrainDataset(Dataset):
 
         with open(f'{data_root}/split_txt/train_list.txt', 'r') as fin:
             hyper_list = [line.replace('\n','.mat') for line in fin]
-            bgr_list = [line.replace('.mat','_RGB_D_gc.png') for line in hyper_list]
+            bgr_list = [line.replace('.mat','_RGB_D.jpg') for line in hyper_list]
             nir_list = [line.replace('.mat','_NIR.jpg') for line in hyper_list]
         hyper_list.sort()
         bgr_list.sort()
@@ -31,13 +31,14 @@ class TrainDataset(Dataset):
         print(f'len(bgr) of MobiSpectral dataset:{len(bgr_list)}')
         for i in range(len(hyper_list)):
             hyper_path = hyper_data_path + hyper_list[i]
-            cube = hdf5storage.loadmat(hyper_path,variable_names=['rad'])
-            hyper = cube['rad'][:,:,1:204:3]
+            cube = hdf5storage.loadmat(hyper_path,variable_names=['cube'])
+            print(cube)
+            hyper = cube['cube'][:,:,1:204:3]
             hyper = np.transpose(hyper, [2, 0, 1])
             bgr_path = bgr_data_path + bgr_list[i]
             nir_path = bgr_data_path + nir_list[i]
             bgr = imread(bgr_path)
-            nir = imread(nir_path)
+            nir = imread(nir_path)#, pilmode='RGB')
             bgr = np.float32(bgr)
             nir = np.float32(nir)
             bgr = (bgr-bgr.min())/(bgr.max()-bgr.min())
@@ -90,7 +91,7 @@ class ValidDataset(Dataset):
         bgr_data_path = f'{data_root}/Train_RGB/'
         with open(f'{data_root}/split_txt/valid_list.txt', 'r') as fin:
             hyper_list = [line.replace('\n', '.mat') for line in fin]
-            bgr_list = [line.replace('.mat','_RGB_D_gc.png') for line in hyper_list]
+            bgr_list = [line.replace('.mat','_RGB_D.jpg') for line in hyper_list]
             nir_list = [line.replace('.mat','_NIR.jpg') for line in hyper_list]
         hyper_list.sort()
         bgr_list.sort()
@@ -99,13 +100,13 @@ class ValidDataset(Dataset):
         print(f'len(bgr_valid) of MobiSpectral dataset:{len(bgr_list)}')
         for i in range(len(hyper_list)):
             hyper_path = hyper_data_path + hyper_list[i]
-            cube = hdf5storage.loadmat(hyper_path,variable_names=['rad'])
-            hyper = cube['rad'][:,:,1:204:3]
+            cube = hdf5storage.loadmat(hyper_path,variable_names=['cube'])
+            hyper = cube['cube'][:,:,1:204:3]
             hyper = np.transpose(hyper, [2, 0, 1])
             bgr_path = bgr_data_path + bgr_list[i]
             nir_path = bgr_data_path + nir_list[i]
             bgr = imread(bgr_path)
-            nir = imread(nir_path)
+            nir = imread(nir_path)#, pilmode='RGB')
             bgr = np.float32(bgr)
             nir = np.float32(nir)
             bgr = (bgr - bgr.min()) / (bgr.max() - bgr.min())
