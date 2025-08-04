@@ -12,6 +12,7 @@ from utils import AverageMeter, initialize_logger, save_checkpoint, record_loss,
     time2file_name, Loss_MRAE, Loss_RMSE, Loss_PSNR
 import datetime
 from torchsummary import summary
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser(description="Spectral Recovery Toolbox")
 parser.add_argument('--method', type=str, default='mst_plus_plus')
@@ -42,8 +43,24 @@ train_datasets = []
 val_datasets = []
 
 for d in dirs:
-    train_datasets.append(TrainDataset(data_root=f"{opt.data_root}/{d}/reconstruction", crop_size=opt.patch_size, bgr2rgb=True, arg=True, stride=opt.stride))
-    val_datasets.append(ValidDataset(data_root=f"{opt.data_root}/{d}/reconstruction", bgr2rgb=True))
+    hyper_path = f"{opt.data_root}/{d}/reconstruction/Train_Spec/"
+    hyper_train, hyper_val = train_test_split(os.listdir(hyper_path), train_size = 0.8)
+    rgb_path = f"{opt.data_root}/{d}/reconstruction/Train_RGB/"
+    rgb_files = os.listdir(rgb_path)
+    rgb_train, rgb_val = train_test_split([x for x in os.listdir(rgb_path) if not ("NIR" in x)], train_size = 0.8)
+    
+    train_datasets.append(TrainDataset(data_root=f"{opt.data_root}/{d}/reconstruction", 
+                                       hyper_list=hyper_train,
+                                       bgr_list=rgb_train,
+                                       crop_size=opt.patch_size, 
+                                       bgr2rgb=True, 
+                                       arg=True, 
+                                       stride=opt.stride))
+    val_datasets.append(ValidDataset(data_root=f"{opt.data_root}/{d}/reconstruction", 
+                                     hyper_list=hyper_val,
+                                     bgr_list=rgb_val,
+                                     bgr2rgb=True))
+    
 train_data = ConcatDataset(train_datasets)
 val_data = ConcatDataset(val_datasets)
 
@@ -51,7 +68,7 @@ print("Iteration per epoch:", len(train_data))
 print("Validation set samples: ", len(val_data))
 
 # iterations
-per_epoch_iteration = 1000
+per_epoch_iteration = 500
 total_iteration = per_epoch_iteration*opt.end_epoch
 
 # loss function
@@ -111,7 +128,6 @@ def main():
         train_loader = DataLoader(dataset=train_data, batch_size=opt.batch_size, shuffle=True, num_workers=2,
                                   pin_memory=True, drop_last=True)
         val_loader = DataLoader(dataset=val_data, batch_size=1, shuffle=False, num_workers=2, pin_memory=True)
-        print("BEFORE LOOP")
         for i, (images, labels) in enumerate(train_loader):
             labels = torch.add(labels,0.0001)
             labels = labels.cuda()

@@ -7,7 +7,7 @@ import hdf5storage
 from imageio import imread
 
 class TrainDataset(Dataset):
-    def __init__(self, data_root, crop_size, arg=True, bgr2rgb=True, stride=8):
+    def __init__(self, data_root, hyper_list, bgr_list, crop_size, arg=True, bgr2rgb=True, stride=8):
         self.crop_size = crop_size
         self.hypers = []
         self.bgrs = []
@@ -21,20 +21,23 @@ class TrainDataset(Dataset):
         hyper_data_path = f'{data_root}/Train_Spec/'
         bgr_data_path = f'{data_root}/Train_RGB/'
 
-        with open(f'{data_root}/split_txt/train_list.txt', 'r') as fin:
-            hyper_list = [line.replace('\n','.mat') for line in fin]
-            bgr_list = [line.replace('.mat','_RGB_D.jpg') for line in hyper_list]
-            nir_list = [line.replace('.mat','_NIR.jpg') for line in hyper_list]
+        nir_list = [line.replace('_RGB_D','_NIR') for line in bgr_list]
+        nir_list = [line.replace('_5500.png','.jpg') for line in nir_list]
         hyper_list.sort()
         bgr_list.sort()
+        nir_list.sort()
         print(f'len(hyper) of MobiSpectral dataset:{len(hyper_list)}')
         print(f'len(bgr) of MobiSpectral dataset:{len(bgr_list)}')
+        
+        loaded_cubes = []
         for i in range(len(hyper_list)):
             hyper_path = hyper_data_path + hyper_list[i]
             cube = hdf5storage.loadmat(hyper_path,variable_names=['cube'])
-            print(cube)
             hyper = cube['cube'][:,:,1:204:3]
             hyper = np.transpose(hyper, [2, 0, 1])
+            loaded_cubes.append(hyper)
+            
+        for i in range(len(bgr_list)):
             bgr_path = bgr_data_path + bgr_list[i]
             nir_path = bgr_data_path + nir_list[i]
             bgr = imread(bgr_path)
@@ -45,7 +48,7 @@ class TrainDataset(Dataset):
             nir = (nir-nir.min())/(nir.max()-nir.min())
             bgr = np.dstack((bgr,nir))
             bgr = np.transpose(bgr, [2, 0, 1])
-            self.hypers.append(hyper)
+            self.hypers.append(random.choice(loaded_cubes)) #get a random cube
             self.bgrs.append(bgr)
             print(f'MobiSpectral scene {i} is loaded.')
         self.img_num = len(self.hypers)
@@ -84,37 +87,40 @@ class TrainDataset(Dataset):
         return self.patch_per_img*self.img_num
 
 class ValidDataset(Dataset):
-    def __init__(self, data_root, bgr2rgb=True):
+    def __init__(self, data_root, hyper_list, bgr_list, bgr2rgb=True):
         self.hypers = []
         self.bgrs = []
         hyper_data_path = f'{data_root}/Train_Spec/'
         bgr_data_path = f'{data_root}/Train_RGB/'
-        with open(f'{data_root}/split_txt/valid_list.txt', 'r') as fin:
-            hyper_list = [line.replace('\n', '.mat') for line in fin]
-            bgr_list = [line.replace('.mat','_RGB_D.jpg') for line in hyper_list]
-            nir_list = [line.replace('.mat','_NIR.jpg') for line in hyper_list]
+        
+        nir_list = [line.replace('_RGB_D','_NIR') for line in bgr_list]
+        nir_list = [line.replace('_5500.png','.jpg') for line in nir_list]
         hyper_list.sort()
         bgr_list.sort()
         nir_list.sort()
         print(f'len(hyper_valid) of MobiSpectral dataset:{len(hyper_list)}')
         print(f'len(bgr_valid) of MobiSpectral dataset:{len(bgr_list)}')
+        
+        loaded_cubes = []
         for i in range(len(hyper_list)):
             hyper_path = hyper_data_path + hyper_list[i]
             cube = hdf5storage.loadmat(hyper_path,variable_names=['cube'])
             hyper = cube['cube'][:,:,1:204:3]
             hyper = np.transpose(hyper, [2, 0, 1])
+            loaded_cubes.append(hyper)
+            
+        for i in range(len(bgr_list)):
             bgr_path = bgr_data_path + bgr_list[i]
             nir_path = bgr_data_path + nir_list[i]
             bgr = imread(bgr_path)
             nir = imread(nir_path)#, pilmode='RGB')
             bgr = np.float32(bgr)
             nir = np.float32(nir)
-            bgr = (bgr - bgr.min()) / (bgr.max() - bgr.min())
-            nir = (nir - nir.min()) / (nir.max() - nir.min())
-
+            bgr = (bgr-bgr.min())/(bgr.max()-bgr.min())
+            nir = (nir-nir.min())/(nir.max()-nir.min())
             bgr = np.dstack((bgr,nir))
             bgr = np.transpose(bgr, [2, 0, 1])
-            self.hypers.append(hyper)
+            self.hypers.append(random.choice(loaded_cubes)) #get a random cube
             self.bgrs.append(bgr)
             print(f'MobiSpectral scene {i} is loaded.')
 

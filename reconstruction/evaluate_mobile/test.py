@@ -33,13 +33,14 @@ def main():
     test(model, test_path, opt.outf)
 
 def test(model, test_path, save_path):
-    img_path_name = glob.glob(os.path.join(test_path, '*_RGB_D.jpg'))
+    img_path_name = glob.glob(os.path.join(test_path,'*_5500.png'))
     img_path_name.sort()
     var_name = 'cube'
     print(img_path_name)
     for i in range(len(img_path_name)):
         rgb = imageio.imread(img_path_name[i])
-        nir_path = img_path_name[i].replace('_RGB_D.jpg','_NIR.jpg')
+        nir_path = img_path_name[i].replace('_RGB_D','_NIR')
+        nir_path = nir_path.replace('_5500.png','.jpg')
         nir = imageio.imread(nir_path)
         rgb = np.float32(rgb)
         nir = np.float32(nir)
