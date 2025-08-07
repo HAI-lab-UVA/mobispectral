@@ -19,6 +19,7 @@ parser.add_argument('--method', type=str, default='mst_plus_plus')
 parser.add_argument('--pretrained_model_path', type=str, default=None)
 parser.add_argument("--batch_size", type=int, default=20, help="batch size")
 parser.add_argument("--end_epoch", type=int, default=100, help="number of epochs")
+parser.add_argument("--per_epoch_iter", type=int, default=500, help="iterations per epoch")
 parser.add_argument("--init_lr", type=float, default=4e-4, help="initial learning rate")
 parser.add_argument("--outf", type=str, default='./exp/mst_plus_plus/', help='path log files')
 parser.add_argument("--data_root", type=str, default='../dataset/')
@@ -65,8 +66,7 @@ print("Iteration per epoch:", len(train_data))
 print("Validation set samples: ", len(val_data))
 
 # iterations
-per_epoch_iteration = 500
-total_iteration = per_epoch_iteration*opt.end_epoch
+total_iteration = opt.per_epoch_iter*opt.end_epoch
 
 # loss function
 criterion_mrae = Loss_MRAE()
