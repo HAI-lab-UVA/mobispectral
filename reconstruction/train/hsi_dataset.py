@@ -50,7 +50,6 @@ class TrainDataset(Dataset):
             bgr = np.transpose(bgr, [2, 0, 1])
             self.hypers.append(random.choice(loaded_cubes)) #get a random cube
             self.bgrs.append(bgr)
-            print(f'MobiSpectral scene {i} is loaded.')
         self.img_num = len(self.hypers)
         self.length = self.patch_per_img * self.img_num
 
