@@ -121,7 +121,6 @@ class ValidDataset(Dataset):
             bgr = np.transpose(bgr, [2, 0, 1])
             self.hypers.append(random.choice(loaded_cubes)) #get a random cube
             self.bgrs.append(bgr)
-            print(f'MobiSpectral scene {i} is loaded.')
 
     def __getitem__(self, idx):
         hyper = self.hypers[idx]
