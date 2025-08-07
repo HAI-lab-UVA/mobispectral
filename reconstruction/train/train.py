@@ -26,7 +26,7 @@ parser.add_argument("--data_root", type=str, default='../dataset/')
 parser.add_argument("--patch_size", type=int, default=16, help="patch size")
 parser.add_argument("--stride", type=int, default=16, help="stride")
 parser.add_argument("--gpu_id", type=str, default='0', help='path log files')
-parser.add_argument("--train_split", type=int, default=0.8, help='train split, in train-val split')
+parser.add_argument("--train_split", type=float, default=0.8, help='train split, in train-val split')
 opt = parser.parse_args()
 os.environ["CUDA_DEVICE_ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu_id
